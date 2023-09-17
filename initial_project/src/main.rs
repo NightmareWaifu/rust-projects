@@ -19,7 +19,7 @@ fn main() {
 
     println!("updated y value: {y}");
 
-    const THIS_IS_A_CONSTANT:i32 = 100; //constants are always immutable
+    const THIS_IS_A_CONSTANT:i32 = 100; //constants are always immutable and have global scope
 
     println!("Constant values do not change: {THIS_IS_A_CONSTANT}");
 
