@@ -1,0 +1,19 @@
+BATTLESHIP SYSTEM STRUCTURE
+
+
+Goal
+---
+
+Rules
+---
+
+Objects
+---
+
+Coordinate{
+column: i32,
+row: i32
+}
+
+Functions
+---

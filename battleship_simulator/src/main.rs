@@ -4,8 +4,10 @@ use colored::Colorize;
 
 // fn update_attacked_coordinates(coordinates: coordinate) ->Vec<coordinate>{
     
-//     const ATTACKED_COORDINATES: Vec<coordinate> = vec![];
+//     const attacked_coordinates: Vec<coordinate> = vec![];
 // }
+
+
 #[derive(Clone,Copy,PartialEq)]
 struct coordinate{
     column: i32,
@@ -20,9 +22,8 @@ impl coordinate {
     }
 }
 
-
 struct ship_coordinates{
-    coordinates: [coordinate;1]
+    coordinates: Vec<coordinate>
     //to create
     // let ship = ship_coordinates{
     //     coordinates:
@@ -32,19 +33,28 @@ struct ship_coordinates{
     //     }]
     // };
 }
+
+fn validate_input(user_input: String){
+    //function to validate user input since i didnt validate anything LMAOOO
+}
 fn main() {
     println!("Battleship Simulator");
     let mut game_ongoing: bool = true;
-    let mut ATTACKED_COORDINATES: Vec<coordinate> = vec![];
+    let mut attacked_coordinates: Vec<coordinate> = vec![];
     let ship_size = io_ship_size(); //get user inputs
     let grid_size = ship_size * 2;
     let mut get_coordinates: coordinate;
-    initial_grid(grid_size, &mut ATTACKED_COORDINATES);
+    initial_grid(grid_size, &mut attacked_coordinates);
+
+    let mut user_ship_coordinates: Vec<coordinate> = generate_user_ship(ship_size, grid_size).coordinates;
+    for i in 0..user_ship_coordinates.len(){
+        println!("Ship: {}, {}",user_ship_coordinates[i].column,user_ship_coordinates[i].row);
+    }
     while game_ongoing{
         separator();
          //send request to input attack
-         get_coordinates = io__user_attack();
-        let mut coordinate_invalid: bool = if (ATTACKED_COORDINATES.contains(&get_coordinates) || (get_coordinates.column > grid_size || get_coordinates.row > grid_size)) {true} else {false};
+        get_coordinates = io__user_attack();
+        let mut coordinate_invalid: bool = if (attacked_coordinates.contains(&get_coordinates) || (get_coordinates.column > grid_size || get_coordinates.row > grid_size)) {true} else {false};
         if coordinate_invalid{
             separator();
             println!("Coordinate has been previously attacked or is out of grid!");
@@ -52,13 +62,13 @@ fn main() {
             let mut bind_coordinates: coordinate = coordinate::new(
                 get_coordinates.column, 
                 get_coordinates.row);
-            ATTACKED_COORDINATES.push(bind_coordinates); 
+            attacked_coordinates.push(bind_coordinates); 
         }
         
 
         
 
-        initial_grid(grid_size, &mut ATTACKED_COORDINATES)
+        initial_grid(grid_size, &mut attacked_coordinates)
     }
         
 }
@@ -66,6 +76,7 @@ fn main() {
 
 fn initial_grid(grid_size: i32, attacked_coordinates: &mut Vec<coordinate>){
     //println!("Vector size: {}",attacked_coordinates.len());
+    separator();
     let mut columns = grid_size;
     let mut rows = grid_size;
 
@@ -155,7 +166,7 @@ fn io() -> io::Stdin{
 
 //register IO
 fn io_ship_size() -> i32{
-    let ship_sizes: [&str; 3] = ["3","4","5"]; //set grid limit here
+    let ship_sizes: [&str; 2] = ["3","5"]; //set grid limit here
     println!("Choose Ship Size:");
     
     for i in ship_sizes{
@@ -203,3 +214,56 @@ fn io__user_attack() -> coordinate{
     return coordinate { column: user_attack_c, row: user_attack_r }
     //redraw grid to show where they attacked and ask for confirmation
 }   
+
+fn generate_user_ship(ship_size: i32,grid_size: i32) -> ship_coordinates{
+    separator();
+    let scalar: [&str;3] = ["Vertical", "Horizontal", "Diagonal(WIP)"];
+    let mut valid_coordinate: bool = false;
+
+    println!("Ship size: {}", ship_size);
+    //get user input on where he wants to place ship
+    //let user select middle coordinate, vertical/horizontal then auto generate for them
+    let mut chosen_coordinate_c_io: String = String::new();
+    let mut chosen_coordinate_c: i32 = 0;
+    let mut chosen_coordinate_r_io: String = String::new();
+    let mut chosen_coordinate_r: i32 = 0;
+    println!("Enter your ship's main coordinate: ");
+
+    while !valid_coordinate{
+        println!("Column: ");
+        io().read_line(&mut chosen_coordinate_c_io);
+        chosen_coordinate_c = chosen_coordinate_c_io.trim().parse().expect("Invalid Column!");
+        if chosen_coordinate_c > grid_size{
+            println!("Invalid Column Value!");
+        } else{
+            break;
+        }
+    }
+    
+
+    while !valid_coordinate{
+        println!("Row: ");
+        io().read_line(&mut chosen_coordinate_r_io);
+        chosen_coordinate_r = chosen_coordinate_r_io.trim().parse().expect("Invalid Column!");
+        if chosen_coordinate_r > grid_size{
+            println!("Invalid Row Value!");
+        } else{
+            break;
+        }
+    }
+
+    let middle_coordinate: i32 = (ship_size + 1)/2;
+
+    let mut user_ship_coordinates: ship_coordinates;
+    return ship_coordinates{
+        coordinates: vec![coordinate{
+            column: chosen_coordinate_c,
+            row: chosen_coordinate_r
+        },
+        coordinate{
+            column: 2,
+            row: 2
+        }
+        ]
+    };
+}
