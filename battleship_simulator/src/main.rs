@@ -22,20 +22,12 @@ impl coordinate {
     }
 }
 
-struct ship_coordinates{
-    coordinates: Vec<coordinate>
-    //to create
-    // let ship = ship_coordinates{
-    //     coordinates:
-    //     [coordinate{
-    //         column: c,
-    //         row: r
-    //     }]
-    // };
-}
 
-fn validate_input(user_input: String){
+fn validate_input(user_input: String) -> bool{
     //function to validate user input since i didnt validate anything LMAOOO
+    let mut is_valid: bool = true;
+    //put logic here
+    return is_valid;
 }
 fn main() {
     println!("Battleship Simulator");
@@ -44,9 +36,12 @@ fn main() {
     let ship_size = io_ship_size(); //get user inputs
     let grid_size = ship_size * 2;
     let mut get_coordinates: coordinate;
-    initial_grid(grid_size, &mut attacked_coordinates);
+    let mut user_ship_coordinates: Vec<coordinate> =  vec![];
+    initial_grid(grid_size, &mut attacked_coordinates,&mut user_ship_coordinates);
 
-    let mut user_ship_coordinates: Vec<coordinate> = generate_user_ship(ship_size, grid_size).coordinates;
+    user_ship_coordinates = generate_user_ship(ship_size, grid_size);
+    println!("Ship Coordinates");
+    println!("      C| R");
     for i in 0..user_ship_coordinates.len(){
         println!("Ship: {}, {}",user_ship_coordinates[i].column,user_ship_coordinates[i].row);
     }
@@ -63,36 +58,31 @@ fn main() {
                 get_coordinates.column, 
                 get_coordinates.row);
             attacked_coordinates.push(bind_coordinates); 
+            initial_grid(grid_size, &mut attacked_coordinates, &mut user_ship_coordinates)
         }
         
 
         
 
-        initial_grid(grid_size, &mut attacked_coordinates)
+        
     }
         
 }
 
 
-fn initial_grid(grid_size: i32, attacked_coordinates: &mut Vec<coordinate>){
+fn initial_grid(grid_size: i32, attacked_coordinates: &mut Vec<coordinate>, ship_coordinates: &mut Vec<coordinate>){
     //println!("Vector size: {}",attacked_coordinates.len());
     separator();
     let mut columns = grid_size;
     let mut rows = grid_size;
 
-    let grid_box: Vec<&str> = vec!["[O]"];
+    let grid_box: String = "[O]".to_string();
     let marked_grid_box: String = "[X]".to_string();
 
-    //input
-    let mut ship_size = 3; //let user choose between ship sizes
-    //println!("Columns: {columns}\nRows: {rows}");
-
-    //let gridbox: &str = "[ ]";
-
-    //let row_grid = gridbox.repeat(rows);
+    //system messages
+    let mut global_hit: bool = false; 
 
 
-    //need to set ID for each gridbox
     //format: C1R1 represents column 1 row 1 gridbox
     let grid_numbers: usize = grid_size.to_string().len();
     for r in 0..(rows+1){
@@ -120,10 +110,34 @@ fn initial_grid(grid_size: i32, attacked_coordinates: &mut Vec<coordinate>){
             } else {
                 let mut marked: bool = false;
                 //check if coordinate has been attacked
+                let mut current_attack: coordinate;
+                if attacked_coordinates.len() == 0{
+                    current_attack = coordinate { 
+                        column: c, 
+                        row: r };
+                }else {
+                    current_attack = coordinate { 
+                        column: attacked_coordinates[attacked_coordinates.len() - 1].column, 
+                        row: attacked_coordinates[attacked_coordinates.len() - 1].row };
+                }
+                
                 for attacked_coordinate in attacked_coordinates.iter_mut(){
-                    //println!("C: {} R: {}", attacked_coordinate.column, attacked_coordinate.row);
                     if (attacked_coordinate.column == c && attacked_coordinate.row == r){
-                        print!("{}",marked_grid_box.red());
+                        let mut hit: bool = false;
+                        for index in 0..ship_coordinates.len(){
+                            if ship_coordinates[index].column == c && ship_coordinates[index].row == r{
+                                print!("{}",marked_grid_box.red());
+                                hit = true;
+                                if ship_coordinates[index].column == current_attack.column && ship_coordinates[index].row == current_attack.row{
+                                    global_hit = true;
+                                }
+                                break;
+                            }
+                        }
+                        if !hit{
+                            print!("{}",grid_box.blue());
+                        }
+                        
                         //make hit and no hit different colours
                         marked = true;
                     } else {
@@ -132,7 +146,7 @@ fn initial_grid(grid_size: i32, attacked_coordinates: &mut Vec<coordinate>){
                 }
                 if !marked{
                     
-                    print!("{}",grid_box.concat());
+                    print!("{}",grid_box);
                 }
                 
                 //print gridbox
@@ -141,6 +155,18 @@ fn initial_grid(grid_size: i32, attacked_coordinates: &mut Vec<coordinate>){
 
         }
         //println!(); //leaves space between rows
+    }
+    separator();
+    if global_hit{
+        println!("Target Hit! {}",global_hit);
+        global_hit = false;
+    } else{
+        if attacked_coordinates.len() == 0{
+            print!("Game Start!");
+        }else {
+            print!("Missed!");
+        }
+        
     }
 }
 
@@ -215,9 +241,9 @@ fn io__user_attack() -> coordinate{
     //redraw grid to show where they attacked and ask for confirmation
 }   
 
-fn generate_user_ship(ship_size: i32,grid_size: i32) -> ship_coordinates{
+fn generate_user_ship(ship_size: i32,grid_size: i32) -> Vec<coordinate>{
     separator();
-    let scalar: [&str;3] = ["Vertical", "Horizontal", "Diagonal(WIP)"];
+    let scalar: [&str;3] = ["Horizontal", "Vertical", "Diagonal(WIP)"];
     let mut valid_coordinate: bool = false;
 
     println!("Ship size: {}", ship_size);
@@ -227,43 +253,69 @@ fn generate_user_ship(ship_size: i32,grid_size: i32) -> ship_coordinates{
     let mut chosen_coordinate_c: i32 = 0;
     let mut chosen_coordinate_r_io: String = String::new();
     let mut chosen_coordinate_r: i32 = 0;
+
+    separator();
+    println!("Ship Orientations: ");
+    for direction in 0..scalar.len(){
+        println!("{}. {}", direction + 1, scalar[direction]);
+    } 
+
+    println!("Enter Selection: ");
+    let mut ship_orientation_io: String = String::new();
+    let mut ship_orientation: i32;
+    io().read_line(&mut ship_orientation_io);
+    ship_orientation = ship_orientation_io.trim().parse().expect("Invalid Selection.");
+    ship_orientation -= 1;
+    
     println!("Enter your ship's main coordinate: ");
 
-    while !valid_coordinate{
-        println!("Column: ");
-        io().read_line(&mut chosen_coordinate_c_io);
-        chosen_coordinate_c = chosen_coordinate_c_io.trim().parse().expect("Invalid Column!");
-        if chosen_coordinate_c > grid_size{
-            println!("Invalid Column Value!");
-        } else{
-            break;
+    println!("Column: ");
+    io().read_line(&mut chosen_coordinate_c_io);
+    chosen_coordinate_c = chosen_coordinate_c_io.trim().parse().expect("Invalid Column!");
+
+    println!("Row: ");
+    io().read_line(&mut chosen_coordinate_r_io);
+    chosen_coordinate_r = chosen_coordinate_r_io.trim().parse().expect("Invalid Row!");
+ 
+    let middle_coordinate: coordinate = coordinate { column: chosen_coordinate_c, row: chosen_coordinate_r };
+    separator();
+
+    let mut user_ship_coordinates: Vec<coordinate> = vec![];
+
+    //how the algo works
+    //1 e.g. ship size 5 -> user inputs middle so we have 4 coordinates to plot
+    //2 we can do for 1..middle -> 2 for loops to plot before and after middle coord
+
+    if ship_orientation == 0{ //horizontal - change column
+        println!("Vertical");
+        //plot before
+        for i in 1..(ship_size+1)/2{
+            user_ship_coordinates.push(coordinate { column: chosen_coordinate_c - ((ship_size+1)/2 - i), row: chosen_coordinate_r })
         }
+        //plot middle (input)
+        user_ship_coordinates.push(coordinate { column: chosen_coordinate_c, row: chosen_coordinate_r });
+        //plot after
+        for i in 1..(ship_size+1)/2{
+            user_ship_coordinates.push(coordinate { column: chosen_coordinate_c + i, row: chosen_coordinate_r })
+        }
+    } else if ship_orientation == 1 { //vertical - change row
+        println!("Horizontal");
+        for i in 1..(ship_size+1)/2{
+            user_ship_coordinates.push(coordinate { column: chosen_coordinate_c, row: chosen_coordinate_r - ((ship_size+1)/2 - i) })
+        }
+        //plot middle (input)
+        user_ship_coordinates.push(coordinate { column: chosen_coordinate_c, row: chosen_coordinate_r });
+        //plot after
+        for i in 1..(ship_size+1)/2{
+            user_ship_coordinates.push(coordinate { column: chosen_coordinate_c, row: chosen_coordinate_r + i })
+        }
+    } else{
+        println!("Diagonal is WIP");
     }
+
     
 
-    while !valid_coordinate{
-        println!("Row: ");
-        io().read_line(&mut chosen_coordinate_r_io);
-        chosen_coordinate_r = chosen_coordinate_r_io.trim().parse().expect("Invalid Column!");
-        if chosen_coordinate_r > grid_size{
-            println!("Invalid Row Value!");
-        } else{
-            break;
-        }
-    }
-
-    let middle_coordinate: i32 = (ship_size + 1)/2;
-
-    let mut user_ship_coordinates: ship_coordinates;
-    return ship_coordinates{
-        coordinates: vec![coordinate{
-            column: chosen_coordinate_c,
-            row: chosen_coordinate_r
-        },
-        coordinate{
-            column: 2,
-            row: 2
-        }
-        ]
-    };
+    
+    
+    return user_ship_coordinates;
 }
