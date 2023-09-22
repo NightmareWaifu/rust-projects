@@ -1,4 +1,4 @@
-use std::{io, vec}; 
+use std::{io, vec, process, f32::INFINITY}; 
 use rand::Rng;
 use colored::Colorize;
 
@@ -6,12 +6,18 @@ use colored::Colorize;
     
 //     const attacked_coordinates: Vec<coordinate> = vec![];
 // }
-
+//same column diff row = vertical
+//same row diff column = horizontal
 
 #[derive(Clone,Copy,PartialEq)]
 struct coordinate{
     column: i32,
     row: i32
+}
+
+struct game{
+    ongoing: bool,
+    hit: bool
 }
 
 impl coordinate {
@@ -22,31 +28,57 @@ impl coordinate {
     }
 }
 
+struct game_data{
+    coordinate: coordinate,
+    grid_size: i32,
+    hit_coordinates: Vec<coordinate>
+}
+
 
 fn validate_input(user_input: String) -> bool{
-    //function to validate user input since i didnt validate anything LMAOOO
+    //function to validate user input since i didnt validate anything LMAOOO    
     let mut is_valid: bool = true;
     //put logic here
     return is_valid;
 }
 fn main() {
     println!("Battleship Simulator");
-    let mut game_ongoing: bool = true;
+    let mut game_ongoing: bool = true; //set to true when playing, false during testing
     let mut attacked_coordinates: Vec<coordinate> = vec![];
+    let mut game_attacked_coordinates: Vec<coordinate> = vec![];
+    let mut game_hit_coordiantes: Vec<coordinate> = vec![];
     let ship_size = io_ship_size(); //get user inputs
     let grid_size = ship_size * 2;
+    let mut algo_grid = grid_size;
+    let mut game_ship_coordinates: Vec<coordinate> = vec![];
+    
+    game_ship_coordinates = generate_game_ship(ship_size, grid_size);
+    //game_attacked_coordinates.push(game_attack(game_attacked_coordinates.clone(), grid_size));
+
+    
+    //process::exit(1);
     let mut get_coordinates: coordinate;
     let mut user_ship_coordinates: Vec<coordinate> =  vec![];
-    initial_grid(grid_size, &mut attacked_coordinates,&mut user_ship_coordinates);
+    const INITIAL: &str = "INITIAL";
+    initial_grid(grid_size, &mut attacked_coordinates,&mut user_ship_coordinates,INITIAL);
 
     user_ship_coordinates = generate_user_ship(ship_size, grid_size);
-    println!("Ship Coordinates");
+    println!("Your Ship Coordinates");
     println!("      C| R");
     for i in 0..user_ship_coordinates.len(){
         println!("Ship: {}, {}",user_ship_coordinates[i].column,user_ship_coordinates[i].row);
     }
+
+    //users
+    const USER: &str = "User";
+    const GAME: &str = "Game";
+    let mut game_state: game;
+    let mut game_hit: bool = false;
+    let mut round: i32 = 1;
     while game_ongoing{
         separator();
+        println!("Round {}",round);
+        round += 1;
          //send request to input attack
         get_coordinates = io__user_attack();
         let mut coordinate_invalid: bool = if (attacked_coordinates.contains(&get_coordinates) || (get_coordinates.column > grid_size || get_coordinates.row > grid_size)) {true} else {false};
@@ -58,10 +90,29 @@ fn main() {
                 get_coordinates.column, 
                 get_coordinates.row);
             attacked_coordinates.push(bind_coordinates); 
-            game_ongoing = initial_grid(grid_size, &mut attacked_coordinates, &mut user_ship_coordinates)
+            //generate USER grid
+            game_state = initial_grid(grid_size, &mut attacked_coordinates, &mut game_ship_coordinates,USER);
+            game_ongoing = game_state.ongoing;
         }
-        
 
+
+        //game attacks
+        if !game_ongoing{
+            break;
+        } else if coordinate_invalid{
+            continue;
+        } else{
+            let data: game_data = game_attack(game_attacked_coordinates.clone(), algo_grid, game_hit,&mut game_hit_coordiantes,ship_size);
+            game_attacked_coordinates.push(data.coordinate);
+            
+            algo_grid = data.grid_size;
+            game_state = initial_grid(grid_size, &mut game_attacked_coordinates, &mut user_ship_coordinates,GAME);
+            game_hit = game_state.hit;
+            if game_hit{
+                game_hit_coordiantes.push(game_attacked_coordinates[game_attacked_coordinates.len()-1]);
+            }
+            game_ongoing = game_state.ongoing;
+        }
         
 
         
@@ -70,9 +121,10 @@ fn main() {
 }
 
 
-fn initial_grid(grid_size: i32, attacked_coordinates: &mut Vec<coordinate>, ship_coordinates: &mut Vec<coordinate>) -> bool{
+fn initial_grid(grid_size: i32, attacked_coordinates: &mut Vec<coordinate>, ship_coordinates: &mut Vec<coordinate>,user: &str) -> game{
     //println!("Vector size: {}",attacked_coordinates.len());
     separator();
+    println!("{}",user);
     let mut columns = grid_size;
     let mut rows = grid_size;
 
@@ -81,6 +133,7 @@ fn initial_grid(grid_size: i32, attacked_coordinates: &mut Vec<coordinate>, ship
 
     //system messages
     let mut global_hit: bool = false; 
+    let mut current_attack_hit: bool = false;
 
     let mut hit_counter: i32 = 0;
     //format: C1R1 represents column 1 row 1 gridbox
@@ -131,6 +184,7 @@ fn initial_grid(grid_size: i32, attacked_coordinates: &mut Vec<coordinate>, ship
                                 hit_counter += 1;
                                 if ship_coordinates[index].column == current_attack.column && ship_coordinates[index].row == current_attack.row{
                                     global_hit = true;
+                                    current_attack_hit = true;
                                 }
                                 break;
                             }
@@ -159,14 +213,16 @@ fn initial_grid(grid_size: i32, attacked_coordinates: &mut Vec<coordinate>, ship
         //println!(); //leaves space between rows
     }
     separator();
-    if hit_counter == ship_coordinates.len().try_into().unwrap(){
-        println!("You won!");
-        return false;
+    if hit_counter != 0 && hit_counter == ship_coordinates.len().try_into().unwrap(){
+        println!("{} won!",user);
+        return game{
+            ongoing: false,
+            hit: current_attack_hit
+        };
     } else{
         
         if global_hit{
             println!("Target Hit!");
-            global_hit = false;
         } else{
             if attacked_coordinates.len() == 0{
                 print!("Game Start!");
@@ -174,7 +230,10 @@ fn initial_grid(grid_size: i32, attacked_coordinates: &mut Vec<coordinate>, ship
                 print!("Missed!");
             }
         }
-        return true;
+        return game{
+            ongoing: true,
+            hit: current_attack_hit
+        };
     }
     
 }
@@ -296,7 +355,7 @@ fn generate_user_ship(ship_size: i32,grid_size: i32) -> Vec<coordinate>{
     //2 we can do for 1..middle -> 2 for loops to plot before and after middle coord
 
     if ship_orientation == 0{ //horizontal - change column
-        println!("Vertical");
+        println!("Horizontal");
         //plot before
         for i in 1..(ship_size+1)/2{
             user_ship_coordinates.push(coordinate { column: chosen_coordinate_c - ((ship_size+1)/2 - i), row: chosen_coordinate_r })
@@ -308,7 +367,7 @@ fn generate_user_ship(ship_size: i32,grid_size: i32) -> Vec<coordinate>{
             user_ship_coordinates.push(coordinate { column: chosen_coordinate_c + i, row: chosen_coordinate_r })
         }
     } else if ship_orientation == 1 { //vertical - change row
-        println!("Horizontal");
+        println!("Vertical");
         for i in 1..(ship_size+1)/2{
             user_ship_coordinates.push(coordinate { column: chosen_coordinate_c, row: chosen_coordinate_r - ((ship_size+1)/2 - i) })
         }
@@ -329,22 +388,117 @@ fn generate_user_ship(ship_size: i32,grid_size: i32) -> Vec<coordinate>{
     return user_ship_coordinates;
 }
 
-fn game_attack(ship_size: i32) -> coordinate{
+fn generate_game_ship(ship_size: i32,grid_size: i32) -> Vec<coordinate>{
+    //invalid from corners: +-shipsize 
 
-    let mut game_attack_c_io: String = String::new();
-    println!("Enter Column of Attack: ");
-    io().read_line(&mut game_attack_c_io);
-    let game_attack_c: i32 = game_attack_c_io.trim().parse().expect("Column invalid! Please Restart!");
-    
-    
-    let mut game_attack_r_io: String = String::new();
-    println!("Enter Row of Attack: ");
-    io().read_line(&mut game_attack_r_io);
+    let mut game_ship_coordinates: Vec<coordinate> = vec![];
 
-    
-    let game_attack_r: i32 = game_attack_r_io.trim().parse().expect("Row invalid! Please Restart!");
+    let mut rng = rand::thread_rng();
+    let orientation: i32 = rng.gen_range(0..=1); //0 = vertical, 1 = horizontal -> WIP for Diagonal
+    println!("Ship: {}, Grid: {}",ship_size, grid_size);
+    let mut game_attack_c:i32;
+    let game_attack_r: i32;
 
+    if orientation == 0{ //horizontal |
+        //column logic - no limit
+        println!("Entered Horizontal");
+        game_attack_c = rng.gen_range(ship_size..(grid_size - ship_size/2));
+        println!("C: {}",game_attack_c);
 
-    return coordinate { column: game_attack_c, row: game_attack_r }
+        //row logic - lower bracket cannnot be < shipsize | higher bracket cannot be > gridsize - shipsize
+        game_attack_r = rng.gen_range(1..grid_size);
+        
+        println!("R: {}",game_attack_r);
+
+        for i in 1..(ship_size+1)/2{
+            game_ship_coordinates.push(coordinate { column: game_attack_c - ((ship_size+1)/2 - i), row: game_attack_r })
+        }
+        //plot middle (input)
+        game_ship_coordinates.push(coordinate { column: game_attack_c, row: game_attack_r });
+        //plot after
+        for i in 1..(ship_size+1)/2{
+            game_ship_coordinates.push(coordinate { column: game_attack_c + i, row: game_attack_r })
+        }
+
+    } else { //vertical --
+        //
+        println!("Entered Verticals");
+        game_attack_c = rng.gen_range(1..grid_size);
+        println!("C: {}",game_attack_c);
+
+        //row logic - no limit
+        game_attack_r = rng.gen_range(ship_size..(grid_size - ship_size/2));
+        println!("R: {}",game_attack_r);
+
+        for i in 1..(ship_size+1)/2{
+            game_ship_coordinates.push(coordinate { column: game_attack_c, row: game_attack_r - ((ship_size+1)/2 - i) })
+        }
+        //plot middle (input)
+        game_ship_coordinates.push(coordinate { column: game_attack_c, row: game_attack_r });
+        //plot after
+        for i in 1..(ship_size+1)/2{
+            game_ship_coordinates.push(coordinate { column: game_attack_c, row: game_attack_r + i })
+        }
+
+    }
+
+    for index in 0..game_ship_coordinates.len(){
+        println!("C: {}, R: {}",game_ship_coordinates[index].column, game_ship_coordinates[index].row);
+    }
+
+    return game_ship_coordinates;
     //redraw grid to show where they attacked and ask for confirmation
 }  
+
+fn game_attack(game_attacked_coordinates: Vec<coordinate>,grid_size: i32, hit: bool, hit_coordinates: &mut Vec<coordinate>,ship_size: i32) -> game_data{
+    let mut rng = rand::thread_rng();
+
+    let mut column: i32 = 0;
+    let mut row: i32 = 0;
+    let mut valid_coordinate: bool = false;
+    if hit{
+        //assume hit is gridd middle
+        //once 2 hit in a row get orientation
+        hit_coordinates.push(game_attacked_coordinates[game_attacked_coordinates.len()-1]);
+    }
+    
+    while !valid_coordinate{
+        valid_coordinate = true;
+        column = rng.gen_range(1..grid_size);
+        row = rng.gen_range(1..grid_size);
+        if hit_coordinates.len() > 1{
+            let orientation: i32 = if hit_coordinates[0].column == hit_coordinates[1].column {0} else {1}; //where 0 is vertical, 1 is horizontal
+            if orientation == 0{
+                column = hit_coordinates[hit_coordinates.len()-1].column;
+                row = hit_coordinates[hit_coordinates.len()-1].row;
+                //add edge logic
+                row = rng.gen_range((1)..(grid_size));
+                //println!("IF Lower: {}, Higher: {}",)
+            } else{
+                row = hit_coordinates[hit_coordinates.len()-1].row;
+                column = hit_coordinates[hit_coordinates.len()-1].column;
+                //add edge logic
+                column = rng.gen_range((1)..(grid_size));
+                //println!("ELSE Lower: {}, Higher: {}",)
+            }
+            
+            
+        }
+        for index in 0..game_attacked_coordinates.len(){
+            if game_attacked_coordinates[index].column == column && game_attacked_coordinates[index].row == row{
+                valid_coordinate = false;
+                break;
+            } 
+        }
+    }   
+
+    //create algo so when hit, not random and attack-able grid changes size
+    //reverse engineer the generation code
+
+    return game_data{
+        coordinate: coordinate { column: column, row: row },
+        grid_size: grid_size,
+        hit_coordinates: hit_coordinates.to_vec()
+    }
+    
+}
