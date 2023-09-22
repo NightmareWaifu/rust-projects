@@ -6,7 +6,11 @@ Goal
 
 Rules
 ---
-
+2 different grids
+Grid{
+Show ONLY that users attacked spots
+}
+use the init_grid function to pass over the ENEMY ship_coordinates AND USER attacked_coordinates 
 Objects
 ---
 
