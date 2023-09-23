@@ -46,15 +46,17 @@ fn main() {
     let mut game_ongoing: bool = true; //set to true when playing, false during testing
     let mut attacked_coordinates: Vec<coordinate> = vec![];
     let mut game_attacked_coordinates: Vec<coordinate> = vec![];
+    let mut test_attacked_coordinates: Vec<coordinate> = vec![];
     let mut game_hit_coordiantes: Vec<coordinate> = vec![];
+    let mut test_hit_coordinates: Vec<coordinate> = vec![];
     let ship_size = io_ship_size(); //get user inputs
     let grid_size = ship_size * 2;
     let mut algo_grid = grid_size;
     let mut game_ship_coordinates: Vec<coordinate> = vec![];
+    let mut test_ship_coordinates: Vec<coordinate> = vec![];
     
     game_ship_coordinates = generate_game_ship(ship_size, grid_size);
-    //game_attacked_coordinates.push(game_attack(game_attacked_coordinates.clone(), grid_size));
-
+    test_ship_coordinates = generate_game_ship(ship_size, grid_size);
     
     //process::exit(1);
     let mut get_coordinates: coordinate;
@@ -62,7 +64,7 @@ fn main() {
     const INITIAL: &str = "INITIAL";
     initial_grid(grid_size, &mut attacked_coordinates,&mut user_ship_coordinates,INITIAL);
 
-    user_ship_coordinates = generate_user_ship(ship_size, grid_size);
+    //user_ship_coordinates = generate_user_ship(ship_size, grid_size);
     println!("Your Ship Coordinates");
     println!("      C| R");
     for i in 0..user_ship_coordinates.len(){
@@ -72,6 +74,7 @@ fn main() {
     //users
     const USER: &str = "User";
     const GAME: &str = "Game";
+    const TEST: &str = "Test";
     let mut game_state: game;
     let mut game_hit: bool = false;
     let mut round: i32 = 1;
@@ -79,21 +82,36 @@ fn main() {
         separator();
         println!("Round {}",round);
         round += 1;
+
+
          //send request to input attack
-        get_coordinates = io__user_attack();
-        let mut coordinate_invalid: bool = if (attacked_coordinates.contains(&get_coordinates) || (get_coordinates.column > grid_size || get_coordinates.row > grid_size)) {true} else {false};
-        if coordinate_invalid{
-            separator();
-            println!("Coordinate has been previously attacked or is out of grid!");
-        } else{
-            let mut bind_coordinates: coordinate = coordinate::new(
-                get_coordinates.column, 
-                get_coordinates.row);
-            attacked_coordinates.push(bind_coordinates); 
-            //generate USER grid
-            game_state = initial_grid(grid_size, &mut attacked_coordinates, &mut game_ship_coordinates,USER);
-            game_ongoing = game_state.ongoing;
+        // get_coordinates = io__user_attack();
+        // let mut coordinate_invalid: bool = if (attacked_coordinates.contains(&get_coordinates) || (get_coordinates.column > grid_size || get_coordinates.row > grid_size)) {true} else {false};
+        // if coordinate_invalid{
+        //     separator();
+        //     println!("Coordinate has been previously attacked or is out of grid!");
+        // } else{
+        //     let mut bind_coordinates: coordinate = coordinate::new(
+        //         get_coordinates.column, 
+        //         get_coordinates.row);
+        //     attacked_coordinates.push(bind_coordinates); 
+        //     //generate USER grid
+        //     game_state = initial_grid(grid_size, &mut attacked_coordinates, &mut game_ship_coordinates,USER);
+        //     game_ongoing = game_state.ongoing;
+        // }
+        
+        //AI for testing
+        let coordinate_invalid: bool = false;
+        let data: game_data = game_attack(test_attacked_coordinates.clone(), algo_grid, game_hit,&mut test_hit_coordinates,ship_size);
+        test_attacked_coordinates.push(data.coordinate);
+        
+        algo_grid = data.grid_size;
+        game_state = initial_grid(grid_size, &mut test_attacked_coordinates, &mut game_ship_coordinates,TEST);
+        game_hit = game_state.hit;
+        if game_hit{
+            test_hit_coordinates.push(test_attacked_coordinates[test_attacked_coordinates.len()-1]);
         }
+        game_ongoing = game_state.ongoing;
 
 
         //game attacks
