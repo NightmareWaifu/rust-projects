@@ -472,7 +472,7 @@ fn game_attack(game_attacked_coordinates: Vec<coordinate>,grid_size: i32, hit: b
                 column = hit_coordinates[hit_coordinates.len()-1].column;
                 row = hit_coordinates[hit_coordinates.len()-1].row;
                 //add edge logic
-                row = rng.gen_range((1)..(grid_size));
+                row = rng.gen_range((if row - 1 > 0 {row-1} else {1})..(if row + 1 < grid_size {row+1} else {grid_size}));
                 //println!("IF Lower: {}, Higher: {}",)
             } else{
                 row = hit_coordinates[hit_coordinates.len()-1].row;
