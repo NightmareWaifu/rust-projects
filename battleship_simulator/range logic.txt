@@ -1,0 +1,14 @@
+range logic
+
+vertical
+when row - ship_size/2 <= min (1) -> {return 1} else {row - ship_size/2}
+when row + ship_size/2 >= max (grid_size) -> {return grid_size} else {row + ship_size/2}
+
+horizontal
+
+when column = min (1)
+
+when column = max
+
+MISSING LOGIC:
+when log a hit but next move misses, it goes back to random (does not choose coordinate near hit)
