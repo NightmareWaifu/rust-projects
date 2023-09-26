@@ -37,7 +37,17 @@ struct game_data{
 
 fn validate_input(user_input: String) -> bool{
     //function to validate user input since i didnt validate anything LMAOOO    
-    let mut is_valid: bool = true;
+    let mut is_valid: bool;
+    match user_input.trim().parse::<i32>() {
+        Ok(parsed_int) => {
+            println!("You entered: {}", parsed_int);
+            is_valid = true;
+        }
+        Err(_) => {
+            println!("Invalid input! Please enter an integer.");
+            is_valid = false;
+        }
+    }
     //put logic here
     return is_valid;
 }
