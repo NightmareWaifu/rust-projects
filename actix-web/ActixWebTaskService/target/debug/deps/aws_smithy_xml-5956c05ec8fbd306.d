@@ -1,0 +1,9 @@
+C:\Users\iraza\Documents\code\rust\rust-projects\actix-web\ActixWebTaskService\target\debug\deps\aws_smithy_xml-5956c05ec8fbd306.rmeta: C:\Users\iraza\.cargo\registry\src\index.crates.io-6f17d22bba15001f\aws-smithy-xml-0.38.0\src\lib.rs C:\Users\iraza\.cargo\registry\src\index.crates.io-6f17d22bba15001f\aws-smithy-xml-0.38.0\src\decode.rs C:\Users\iraza\.cargo\registry\src\index.crates.io-6f17d22bba15001f\aws-smithy-xml-0.38.0\src\encode.rs C:\Users\iraza\.cargo\registry\src\index.crates.io-6f17d22bba15001f\aws-smithy-xml-0.38.0\src\escape.rs C:\Users\iraza\.cargo\registry\src\index.crates.io-6f17d22bba15001f\aws-smithy-xml-0.38.0\src\unescape.rs
+
+C:\Users\iraza\Documents\code\rust\rust-projects\actix-web\ActixWebTaskService\target\debug\deps\aws_smithy_xml-5956c05ec8fbd306.d: C:\Users\iraza\.cargo\registry\src\index.crates.io-6f17d22bba15001f\aws-smithy-xml-0.38.0\src\lib.rs C:\Users\iraza\.cargo\registry\src\index.crates.io-6f17d22bba15001f\aws-smithy-xml-0.38.0\src\decode.rs C:\Users\iraza\.cargo\registry\src\index.crates.io-6f17d22bba15001f\aws-smithy-xml-0.38.0\src\encode.rs C:\Users\iraza\.cargo\registry\src\index.crates.io-6f17d22bba15001f\aws-smithy-xml-0.38.0\src\escape.rs C:\Users\iraza\.cargo\registry\src\index.crates.io-6f17d22bba15001f\aws-smithy-xml-0.38.0\src\unescape.rs
+
+C:\Users\iraza\.cargo\registry\src\index.crates.io-6f17d22bba15001f\aws-smithy-xml-0.38.0\src\lib.rs:
+C:\Users\iraza\.cargo\registry\src\index.crates.io-6f17d22bba15001f\aws-smithy-xml-0.38.0\src\decode.rs:
+C:\Users\iraza\.cargo\registry\src\index.crates.io-6f17d22bba15001f\aws-smithy-xml-0.38.0\src\encode.rs:
+C:\Users\iraza\.cargo\registry\src\index.crates.io-6f17d22bba15001f\aws-smithy-xml-0.38.0\src\escape.rs:
+C:\Users\iraza\.cargo\registry\src\index.crates.io-6f17d22bba15001f\aws-smithy-xml-0.38.0\src\unescape.rs:
