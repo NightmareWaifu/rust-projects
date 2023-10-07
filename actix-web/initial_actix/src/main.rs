@@ -1,4 +1,8 @@
+#![feature(proc_macro_hygiene)]
+
+pub mod views;
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
+use render::{rsx, Render};
 
 #[get("/")]
 async fn hello() -> impl Responder {
@@ -7,7 +11,8 @@ async fn hello() -> impl Responder {
 
 #[get("/test")]
 async fn test() -> impl Responder {
-    HttpResponse::Ok().body("<h1>Test Page</h1>")
+    //test_html.render();
+    HttpResponse::Ok().body(views::views::test_html())
 }
 
 #[get("/route")]
