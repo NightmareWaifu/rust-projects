@@ -7,6 +7,7 @@ use dotenv::dotenv;
 pub mod schema;
 pub mod models;
 use actix_web::{HttpServer, App, web, HttpResponse, Responder, cookie::Cookie};
+use schema::users::username;
 use tera::{Tera, Context};
 use serde::{Serialize, Deserialize};
 use actix_identity::{Identity, CookieIdentityPolicy, IdentityService};
@@ -146,6 +147,7 @@ async fn post_login(data: web::Form<LoginUser>, id: Identity) -> impl Responder{
         Ok(u) =>{
             if u.password == data.password{
                 let session_token = String::from(u.username);
+                id.remember(data.username.clone().to_string());
                 id.remember(session_token);
                 HttpResponse::Ok().body(format!("Logged in as: {}", data.username))
             } else{ 
@@ -183,7 +185,17 @@ fn establish_connection() -> PgConnection{
     .expect(&format!("Error connection to {}", database_url))
 }
 
-async fn logout(id: Identity) -> impl Responder {
+async fn logout(tera: web::Data<Tera>, id: Identity) -> impl Responder {
+    let mut data = Context::new();
+
+    if let Some(user_name) = id.identity(){
+        data.insert("username", &user_name);
+    } else{
+        data.insert("username", "USERNAME NOT FOUND");
+    }
     id.forget();
-    HttpResponse::Ok().body("Logged out.")
+    data.insert("title", "Logout");
+    let rendered = tera.render("logout.html", &data).unwrap();
+
+    HttpResponse::Ok().body(rendered)
 }
