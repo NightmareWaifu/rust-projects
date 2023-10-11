@@ -1,17 +1,23 @@
+use std::fmt::format;
+
 use diesel::prelude::*;
 use diesel::pg::PgConnection;
 use dotenv::dotenv;
 
 pub mod schema;
 pub mod models;
-use actix_web::{HttpServer, App, web, HttpResponse, Responder};
+use actix_web::{HttpServer, App, web, HttpResponse, Responder, cookie::Cookie};
 use tera::{Tera, Context};
 use serde::{Serialize, Deserialize};
+use actix_identity::{Identity, CookieIdentityPolicy, IdentityService};
+
+
 // pub mod models;
 
 use models::{
     User,
-    NewUser
+    NewUser,
+    LoginUser
 };
 
 
@@ -24,12 +30,12 @@ struct Post{
     author: String
 }
 
-#[derive(Debug, Deserialize)]
-struct LoginUser{
-    username: String,
-    email: String,
-    password: String
-}
+// #[derive(Debug, Deserialize)]
+// struct LoginUser{
+//     username: String,
+//     email: String,
+//     password: String
+// }
 
 
 
@@ -50,6 +56,12 @@ async fn main() -> std::io::Result<()>{
         let tera = Tera::new("templates/**/*").unwrap(); // "/**/*" means to get all the files inside of the templates folder no matter how many sub dirs there are
 
         App::new()
+        .wrap(IdentityService::new(
+            CookieIdentityPolicy::new(&[0;32])
+            .name("auth-cookie")
+            .secure(false) //false - HTTP, true - HTTPS
+        )
+        )
         .app_data(web::Data::new(tera.clone())) //app_data() doesnt work for some reason
         //add all routes below
         .route("/", web::get().to(index))
@@ -59,6 +71,7 @@ async fn main() -> std::io::Result<()>{
         .route("/login", web::post().to(post_login))
         .route("/submission", web::get().to(get_submission))
         .route("/submission", web::post().to(post_submission))
+        .route("/logout", web::to(logout))
     })
     .bind(address)?
     .run()
@@ -111,17 +124,40 @@ async fn post_signup(data: web::Form<NewUser>) -> impl Responder{
     HttpResponse::Ok().body(format!("Successfully saved user: {}",data.username))
 }
 
-async fn get_login(tera: web::Data<Tera>) -> impl Responder{
+async fn get_login(tera: web::Data<Tera>, id: Identity) -> impl Responder{
     let mut data = Context::new();
     data.insert("title", "Login");
+
+    if let Some(id) = id.identity(){
+        return HttpResponse::Ok().body("Already logged in.")
+    }
     
     let rendered = tera.render("login.html", &data).unwrap();
     HttpResponse::Ok().body(rendered)
 }
 
-async fn post_login(data: web::Form<LoginUser>) -> impl Responder{
-    println!("{:?}",data);
-    HttpResponse::Ok().body(format!("Logged in as {}", data.username))
+async fn post_login(data: web::Form<LoginUser>, id: Identity) -> impl Responder{
+    use schema::users::dsl::{username, users};
+
+    let mut connection = establish_connection();
+    let user = users.filter(username.eq(&data.username)).first::<User>(&mut connection);
+
+    match user{
+        Ok(u) =>{
+            if u.password == data.password{
+                let session_token = String::from(u.username);
+                id.remember(session_token);
+                HttpResponse::Ok().body(format!("Logged in as: {}", data.username))
+            } else{ 
+                HttpResponse::Ok().body("Password is incorrect.")
+            }
+        }
+        Err(e) =>{
+            println!("{:?}", e);
+            HttpResponse::Ok().body(format!("User: {} does not exist.", data.username))
+        }
+    }
+        
 }
 
 async fn get_submission(tera: web::Data<Tera>) -> impl Responder{
@@ -145,4 +181,9 @@ fn establish_connection() -> PgConnection{
 
     PgConnection::establish(&database_url)
     .expect(&format!("Error connection to {}", database_url))
+}
+
+async fn logout(id: Identity) -> impl Responder {
+    id.forget();
+    HttpResponse::Ok().body("Logged out.")
 }
