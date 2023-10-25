@@ -1,1 +1,2 @@
 actix-web/web_app/target/
+/*.env*/
